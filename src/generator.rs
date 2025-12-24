@@ -1,27 +1,10 @@
-// https://en.wikipedia.org/wiki/Integer_square_root
-const fn int_sqrt(n: u64) -> u64 {
-    if n <= 1 {
-        return n;
-    }
-
-    let mut x0 = n / 2;
-    let mut x1 = (x0 + n / x0) / 2;
-
-    while x1 < x0 {
-        x0 = x1;
-        x1 = (x0 + n / x0) / 2;
-    }
-
-    x0
-}
-
 #[derive(Debug)]
 #[must_use = "this generator does nothing unless driven"]
 pub struct BlackRockGenerator {
     range: u64,
     seed: u64,
     rounds: usize,
-    a_bits: u32,
+    a_bits: u8,
     a_mask: u64,
     b_mask: u64,
 }
@@ -46,22 +29,15 @@ impl BlackRockGenerator {
     /// let perfect_rng = BlackRockGenerator::with_seed_and_rounds(10, rand::random(), 3);
     /// ```
     pub const fn with_seed_and_rounds(range: u64, seed: u64, rounds: usize) -> Self {
-        let a = (int_sqrt(range) + 1).next_power_of_two();
+        let a = (range.isqrt() + 1).next_power_of_two();
         let b = ((range / a) + 1).next_power_of_two();
-
-        #[inline]
-        const fn bit_count(x: u64) -> u32 {
-            match x.checked_ilog2() {
-                Some(x) => x,
-                None => 0
-            }
-        }
 
         Self {
             range,
             seed,
             rounds,
-            a_bits: bit_count(a),
+            // the number of bits is always <= 64
+            a_bits: a.ilog2() as u8,
             a_mask: a - 1,
             b_mask: b - 1,
         }
